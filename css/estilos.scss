@@ -1,0 +1,33 @@
+
+body {
+    background-color: black;
+
+    button{
+        background: linear-gradient(90deg, rgba(120,127,182,1) 1%, rgba(93,113,194,1) 46%, rgba(0,212,255,1) 100%);
+    }
+}
+
+nav {
+    a {
+        text-decoration: none;
+        color: white;
+    }
+
+    .offcanvas {
+        background-color: black;
+    }
+}
+
+.card {
+    border-radius: 20px;
+
+    img {
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+    }
+
+    .card-body {
+        background-color: black;
+    }
+}
+

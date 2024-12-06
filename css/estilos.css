@@ -1,0 +1,25 @@
+body {
+  background-color: black;
+}
+body button {
+  background: linear-gradient(90deg, rgb(120, 127, 182) 1%, rgb(93, 113, 194) 46%, rgb(0, 212, 255) 100%);
+}
+
+nav a {
+  text-decoration: none;
+  color: white;
+}
+nav .offcanvas {
+  background-color: black;
+}
+
+.card {
+  border-radius: 20px;
+}
+.card img {
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+.card .card-body {
+  background-color: black;
+}/*# sourceMappingURL=estilos.css.map */
