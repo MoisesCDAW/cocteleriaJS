@@ -170,7 +170,6 @@ function constructor_carrito(){
         }
         const contenedor = crearElemento("div", {}, ["productos", "offcanvas-body", "d-flex",  "flex-column", "gap-2"]);
         document.querySelector(".content-carrito").append(contenedor);
-        
 
         carrito.forEach((bebida)=>{
             const contentProducto = crearElemento("div", {}, ["d-flex", "justify-content-between", "align-items-center"]);
@@ -192,7 +191,13 @@ function constructor_carrito(){
 
             botonMas.addEventListener("click", cambiarCantidad);
             botonMenos.addEventListener("click", cambiarCantidad);
-        
+        });
+
+        document.querySelector("#vaciar-carrito").addEventListener("click", ()=>{
+            if (confirm("¿Estás seguro que quieres vaciar el carrito?")) {
+                document.querySelector(".productos").remove();
+                localStorage.removeItem("carrito");
+            }
         });
     }
 }
@@ -230,7 +235,52 @@ function constructor_tarjetas() {
     });
 }
 
+
+function descargarPDF() {
+    const contenedor = document.querySelector(".productos");
+    const bebidas = Array.from(contenedor.querySelectorAll("p"));
+    let nombres = [];
+    let cantidades = [];
+
+    for (let i = 0; i < bebidas.length; i+=2) {
+        nombres.push(bebidas[i].textContent);
+    }
+
+    for (let i = 1; i < bebidas.length; i+=2) {
+        cantidades.push(bebidas[i].textContent);
+    }
+
+    const contentTabla = crearElemento("div", {style:"padding: 30px; padding-left: 60px;"});
+    const titulo = crearElemento("h4");
+    titulo.append("Carrito")
+    const tabla = crearElemento("table", {style:"width: 300px;"});
+    contentTabla.append(titulo, tabla);
+
+    for (let i = 0; i < nombres.length; i++) {
+        const fila = crearElemento("tr");
+        tabla.append(fila);
+
+        const nombre = crearElemento("td");
+        const cantidad = crearElemento("td");
+        fila.append(nombre, cantidad);
+
+        nombre.append(nombres[i]);
+        cantidad.append(cantidades[i]);
+    }
+
+    const opciones = {
+        filename: "carrito.pdf",
+        image: {type: "pdf", quality: 0.98},
+        html2canvas: {scale:2},
+        jsPDF: {
+            format: "a4",
+            orientation: "portrait"
+        }
+    }
+
+    html2pdf().set(opciones).from(contentTabla).save();
+}
+
 // ================= INICIO ==================
 obtenerDatos(cocteleriaAPI);
-
-// localStorage.removeItem("carrito");
+document.querySelector("#descargar-pdf").addEventListener("click", descargarPDF);
