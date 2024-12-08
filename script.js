@@ -66,10 +66,6 @@ async function obtenerDatos(API) {
         // Tomamos los datos y los guardamos en una variable global "Datos"
         .then(datosAPI => {
             datos = datosAPI;
-
-            // Asignamos el evento que se encarga de construir el carrito cuando se haga click en el botón carrito
-            document.querySelector("#carrito").addEventListener("click", constructor_carrito);
-
             constructor_tarjetas();
         })
 
@@ -192,13 +188,6 @@ function constructor_carrito(){
             botonMas.addEventListener("click", cambiarCantidad);
             botonMenos.addEventListener("click", cambiarCantidad);
         });
-
-        document.querySelector("#vaciar-carrito").addEventListener("click", ()=>{
-            if (confirm("¿Estás seguro que quieres vaciar el carrito?")) {
-                document.querySelector(".productos").remove();
-                localStorage.removeItem("carrito");
-            }
-        });
     }
 }
 
@@ -236,12 +225,20 @@ function constructor_tarjetas() {
 }
 
 
+/**
+ * Genera un archivo PDF con el contenido del carrito de compras.
+ * 
+ * La función selecciona los elementos correspondientes dentro del carrito, extrae los nombres y cantidades de los productos,
+ * y luego crea una tabla con esa información. Posteriormente, genera un archivo PDF utilizando la librería `html2pdf`.
+ * 
+ */
 function descargarPDF() {
     const contenedor = document.querySelector(".productos");
     const bebidas = Array.from(contenedor.querySelectorAll("p"));
     let nombres = [];
     let cantidades = [];
 
+    // Separamos los nombres y cantidades de las bebidas
     for (let i = 0; i < bebidas.length; i+=2) {
         nombres.push(bebidas[i].textContent);
     }
@@ -250,6 +247,7 @@ function descargarPDF() {
         cantidades.push(bebidas[i].textContent);
     }
 
+    // Se crea el contenedor para la tabla en el PDF
     const contentTabla = crearElemento("div", {style:"padding: 30px; padding-left: 60px;"});
     const titulo = crearElemento("h4");
     titulo.append("Carrito")
@@ -268,6 +266,7 @@ function descargarPDF() {
         cantidad.append(cantidades[i]);
     }
 
+    // Configuración del archivo PDF
     const opciones = {
         filename: "carrito.pdf",
         image: {type: "pdf", quality: 0.98},
@@ -278,9 +277,38 @@ function descargarPDF() {
         }
     }
 
+    // Generación y descarga del archivo PDF
     html2pdf().set(opciones).from(contentTabla).save();
+}
+
+
+/**
+ * Se encarga de asignar los eventos necesarios a los botones relacionados con el carrito de compras.
+ * 
+ * Esta función agrega los siguientes eventos:
+ * 1. Un evento `click` al botón de carrito, que ejecuta la función `constructor_carrito`.
+ * 2. Un evento `click` al botón de descarga en PDF, que ejecuta la función `descargarPDF`.
+ * 3. Un evento `click` al botón de vaciar carrito, que solicita confirmación al usuario y, 
+ *  si es afirmativa, elimina los productos del carrito y limpia los datos almacenados en `localStorage`.
+ */
+function eventosCarrito() {
+    // Se encarga de construir el carrito cuando se haga click en el botón carrito
+    document.querySelector("#carrito").addEventListener("click", constructor_carrito);
+    
+    // Permite descargar el carrito en PDF
+    document.querySelector("#descargar-pdf").addEventListener("click", descargarPDF);
+    
+    // Vacia el carrito de compras
+    document.querySelector("#vaciar-carrito").addEventListener("click", ()=>{
+        if (confirm("¿Estás seguro que quieres vaciar el carrito?")) {
+            document.querySelector(".productos").remove();
+            localStorage.removeItem("carrito");
+        }
+    });
 }
 
 // ================= INICIO ==================
 obtenerDatos(cocteleriaAPI);
-document.querySelector("#descargar-pdf").addEventListener("click", descargarPDF);
+eventosCarrito();
+
+
