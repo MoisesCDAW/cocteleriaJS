@@ -52,17 +52,24 @@ async function obtenerDatos(API) {
 
     fetch(API)
 
+        // Comprobamos que no hay errores al consultar la API
         .then(respuesta => {
             if (respuesta.ok) {
                 return respuesta.json();
             }else {
-                throw new Error(respuesta.status);
+
+                // Creamos un error y automáticamente se ejecuta el catch
+                throw new Error(respuesta.status); 
             }
         })
 
+        // Tomamos los datos y los guardamos en una variable global "Datos"
         .then(datosAPI => {
             datos = datosAPI;
+
+            // Asignamos el evento que se encarga de construir el carrito cuando se haga click en el botón carrito
             document.querySelector("#carrito").addEventListener("click", constructor_carrito);
+
             constructor_tarjetas();
         })
 
@@ -72,43 +79,77 @@ async function obtenerDatos(API) {
 }
 
 
-function masCantidad(boton){
+/**
+ * Cambia la cantidad de una bebida en el carrito y actualiza la interfaz de usuario.
+ * La función aumenta o disminuye la cantidad de la bebida seleccionada según la acción recibida
+ * y actualiza el carrito en el localStorage.
+ * 
+ * @param {Event} evento - Este evento debe tener una clase que contiene la acción ("mas" o "menos") 
+ *                          y el "idDrink" de la bebida.
+ */
+function cambiarCantidad(evento){
+    const clases = evento.target.className.split(" ");
+    const [accion, bebidaId] = clases;
+    const contentSecundario = document.querySelector(`[class~="${clases[1]}"]`).parentNode; // [class~="1234"] permite buscar clases numéricas, "~" se usa para buscar coincidencias, ya que un elemento puede tener varias clases
+    const carrito = JSON.parse(localStorage.getItem("carrito"));
 
-}
+    // Recorremos el array obtenido del localStorage para buscar la bebida
+    const bebida = carrito.bebidas.find(b => b.idDrink == bebidaId);
 
+    let cantidad = contentSecundario.querySelector("#cantidad");
 
-function menosCantidad(boton){
-    let carrito = localStorage.getItem("carrito");
-
-    if (carrito) {
-        carrito = JSON.parse(carrito);
-    }
-
-    localStorage.setItem("carrito", carrito);
-}
-
-
-function agregarProducto(producto){
-    let carrito = localStorage.getItem("carrito");
-    let existe = false;
-
-    if (!carrito) {
-        // carrito = {drinks: [{id: producto.target.id, nombre: , cantidad: 1}]};
+    if (accion=="mas") {
+        bebida.cantidad += 1;
     }else {
-        carrito = JSON.parse(carrito);
-
-        // let bebidas = new Map(carrito.map(bebida=>[bebida.id, bebida]));
-
-        if (existe) {
-            
-        }else {
-            carrito.drinks.push({nombre: producto.target.id, cantidad: 1});
+        bebida.cantidad -= 1;
+        if (bebida.cantidad<=0) {
+            carrito.bebidas.splice(carrito.bebidas.indexOf(bebida), 1);
+            contentSecundario.parentNode.remove(); // Obtenemos el contenedor principal y lo borramos
         }
-        
     }
 
-    alert("Tu cóctel '" + producto.target.id  + "' fue agregado al carrito!");
+    // Actualizamos el texto de la cantidad en el contenedor
+    cantidad.textContent = bebida.cantidad;
+
     localStorage.setItem("carrito", JSON.stringify(carrito));
+}
+
+
+/**
+ * Agrega una bebida al carrito en el `localStorage`. Si la bebida ya existe en el carrito, 
+ * incrementa su cantidad. Si no, la añade al carrito con cantidad 1.
+ * 
+ * @param {Event} evento - Este evento debe tener un id que será el "idDrink" de la bebida 
+ *                          que se va a agregar al carrito.
+ */
+function agregarBebida(evento){
+    const bebidaId = evento.target.id;
+
+    // Creamos un Map de bebidas para buscar la bebida por su ID y conseguir los datos de la bebida
+    const bebidasMap = new Map(datos.drinks.map(bebida => [bebida.idDrink, bebida]));
+    const bebida = bebidasMap.get(bebidaId);
+
+    // Obtenemos el carrito desde localStorage
+    let carrito = JSON.parse(localStorage.getItem("carrito"));
+    if (!carrito) {
+        carrito = { bebidas: [] };
+    }
+
+    // Buscar si la bebida ya está en el carrito
+    const existe = carrito.bebidas.find(b => b.idDrink == bebidaId);
+
+    if (existe) {
+        existe.cantidad += 1;
+    } else {
+        carrito.bebidas.push({
+            idDrink: bebidaId,
+            strDrink: bebida.strDrink,
+            cantidad: 1
+        });
+    }
+
+    localStorage.setItem("carrito", JSON.stringify(carrito));
+    alert(`Tu cóctel '${bebida.strDrink}' fue agregado al carrito!`);
 }
 
 
@@ -122,7 +163,7 @@ function constructor_carrito(){
 
     if (carrito) {
         carrito = JSON.parse(carrito);
-        carrito = carrito.drinks;
+        carrito = carrito.bebidas;
         
         if (document.querySelector(".productos")) {
             document.querySelector(".productos").remove();
@@ -136,21 +177,21 @@ function constructor_carrito(){
             const nombre = crearElemento("p", {}, ["m-0"]);
             const cantidad = crearElemento("p", {id:"cantidad"}, ["m-0", "d-flex", "align-items-center", "me-4"]);
             const contentBotones = crearElemento("div", {}, ["d-flex", "gap-2"]);
-            const botonMas = crearElemento("button", {}, ["btn"]);
-            const botonMenos = crearElemento("button", {}, ["btn"]);
-            const imgMas = crearElemento("img", {src:"img/mas.png", width:"14px"});
-            const imgMenos = crearElemento("img", {src:"img/menos.png", width:"14px"});
+            const botonMas = crearElemento("button", {}, ["mas", bebida.idDrink, "btn"]);
+            const botonMenos = crearElemento("button", {}, ["menos", bebida.idDrink, "btn"]);
+            const imgMas = crearElemento("img", {src:"img/mas.png", width:"14px"}, ["mas", bebida.idDrink]);
+            const imgMenos = crearElemento("img", {src:"img/menos.png", width:"14px"},["menos", bebida.idDrink]);
             
             contenedor.append(contentProducto);
             contentProducto.append(nombre, contentBotones);
-            nombre.append(bebida.nombre);
+            nombre.append(bebida.strDrink);
             cantidad.append(bebida.cantidad);
             contentBotones.append(cantidad, botonMas, botonMenos);
             botonMas.append(imgMas);
             botonMenos.append(imgMenos);
 
-            botonMas.addEventListener("click", masCantidad);
-            botonMenos.addEventListener("click", menosCantidad);
+            botonMas.addEventListener("click", cambiarCantidad);
+            botonMenos.addEventListener("click", cambiarCantidad);
         
         });
     }
@@ -175,7 +216,7 @@ function constructor_tarjetas() {
         const nombre = crearElemento("h5", {}, ["card-title"]);
         const desc = crearElemento("p", {}, ["card-text"]);
         const addCarrito = crearElemento("button", {id:bebida.idDrink}, ["btn", "text-white", "rounded-pill"]);
-        const imgCarrito = crearElemento("img", {src:"img/carrito.png", width:"22px", id:bebida.strDrink});
+        const imgCarrito = crearElemento("img", {src:"img/carrito.png", width:"22px", id:bebida.idDrink});
 
         contenedor.append(contentTarj);
         contentTarj.append(img, contentBody);
@@ -185,12 +226,11 @@ function constructor_tarjetas() {
         desc.append(descrip);
         addCarrito.append(imgCarrito);
 
-        addCarrito.addEventListener("click", agregarProducto);
+        addCarrito.addEventListener("click", agregarBebida);
     });
 }
 
 // ================= INICIO ==================
 obtenerDatos(cocteleriaAPI);
 
-// localStorage.setItem("carrito", '{"drinks": [{"nombre": "bebida-uno", "cantidad": 2}, {"nombre": "bebida-dos", "cantidad": 1}]}');
 // localStorage.removeItem("carrito");
